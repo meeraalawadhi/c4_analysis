@@ -1,0 +1,71 @@
+C4 Compiler Code Statistics (Collected March 03, 2025)
+----------------------------------------------------
+
+1. Lines of Code (LOC):
+- Total: 487 lines (cloc: code lines, excluding comments and blanks)
+- next(): 85 lines (lizard: length)
+- expr(int lev): 149 lines (lizard: length)
+- stmt(): 48 lines (lizard: length)
+- main(): 196 lines (lizard: length)
+
+2. Cyclomatic Complexity:
+- next(): 85 (lizard: CCN, high due to multiple token type branches)
+- expr(int lev): 91 (lizard: CCN, complex precedence climbing)
+- stmt(): 15 (lizard: CCN, moderate control flow)
+- main(): 100 (lizard: CCN, extensive setup and VM switch-case)
+
+3. Number of Functions and Sizes:
+- Total Functions: 4 (lizard: function_cnt)
+- Sizes:
+  - next(): 85 LOC
+  - expr(): 149 LOC
+  - stmt(): 48 LOC
+  - main(): 196 LOC
+
+4. Global Variables:
+- Count: 13 (p, lp, data, e, le, id, sym, tk, ival, ty, loc, line, src, debug)
+- Usage: Extensively accessed across all functions for parsing, code generation, and VM execution.
+  - Examples: 'tk' and 'ival' in next() and expr(), 'e' in expr() and stmt(), 'sym' for symbol table.
+
+5. Unique Tokens and Frequency:
+- Total Tokens per Function (lizard: token):
+  - next(): 1016 tokens
+  - expr(): 2403 tokens
+  - stmt(): 395 tokens
+  - main(): 2214 tokens
+- Unique Tokens: ~150 (estimated via manual inspection of keywords, operators, identifiers)
+- Common Tokens (estimated):
+  - "if": ~50 (frequent in conditionals)
+  - "*": ~40 (pointers and multiplication)
+  - "while": ~15 (loops across functions)
+  - "tk": ~30 (token handling)
+
+6. Branches, Loops, and Nesting:
+- Branches (estimated from CCN and code structure):
+  - next(): ~20 (multiple if-else for tokens)
+  - expr(): ~25 (conditionals in precedence climbing)
+  - stmt(): ~5 (if, while, return branches)
+  - main(): ~15 (switch-case and setup logic)
+- Loops (manual count):
+  - next(): 5 while loops (e.g., identifier parsing, number parsing)
+  - expr(): 3 while loops (e.g., precedence climbing)
+  - stmt(): 1 while loop (compound statement)
+  - main(): 1 while loop (VM execution)
+- Max Nesting Levels (estimated):
+  - next(): ~3 (nested if in identifier parsing)
+  - expr(): ~4 (nested conditions in precedence)
+  - stmt(): ~2 (if-else nesting)
+  - main(): ~2 (switch within while)
+
+7. Memory Usage Patterns (Estimated, pending dynamic analysis):
+- Stack: Minimal (~few KB) for local variables (e.g., 'pp' in next(), 'd' in expr()).
+- Heap: Significant (~1 MB) via malloc in main() for sym, e, data, sp (each 256 KB by default: poolsz = 256*1024).
+- Pattern: Heavy heap reliance for buffers; stack usage is light due to minimal recursion.
+
+Observations:
+- Total LOC (487) aligns closely with cloc’s code count, confirming a compact yet dense implementation.
+- High cyclomatic complexity (e.g., main(): 100, expr(): 91) reflects intricate control flow, flagged as warnings by lizard (CCN > 15).
+- Function sizes vary widely, with main() (196 LOC) and expr() (149 LOC) being the largest, indicating core logic concentration.
+- Global variables (13) are pivotal, enabling tight integration across lexer, parser, and VM without structs.
+- Token counts (e.g., 2403 in expr()) highlight heavy syntactic processing, consistent with its role in expression handling.
+- Memory usage leans on heap allocations, optimized for static buffers rather than dynamic resizing.

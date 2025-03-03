@@ -1,0 +1,28 @@
+1. What is the purpose of the next() function, and how does it contribute to the compilation process?
+The next() function serves as the lexical analyzer (lexer) in the C4 compiler, responsible for breaking the source code into a stream of tokens. It advances the global pointer *p through the input string, identifying and classifying each token into types (stored in tk) such as keywords (e.g., If, While), identifiers (Id), numbers (Num), operators (e.g., Add, Mul), and symbols (e.g., '{', ';'). For each token, it computes a value (stored in ival) when applicable, like numeric literals or string addresses. It also handles comments, whitespace, and line tracking (via line and *lp), optionally printing source and assembly if the src flag is set. By producing this token stream, next() feeds the parser (expr() and stmt()), enabling syntax analysis and code generation. Its single-pass, stateful design (using globals like *sym for the symbol table) ensures efficiency, aligning with C4’s minimalistic approach, and directly contributes to the compilation process by providing the raw materials for subsequent parsing and instruction emission.
+
+2. How does C4 handle symbol resolution (e.g., variables, functions)?
+C4 manages symbol resolution using a flat symbol table stored in the global array *sym, accessed via the pointer *id. During lexical analysis in next(), identifiers are hashed (using tk = tk * 147 + *p) and checked against existing entries in *sym. If found, their token type (e.g., Fun, Glo) is returned; if not, they’re added as a generic Id and resolved later. The symbol table entries include offsets for token type (Tk), hash (Hash), name pointer (Name), class (Class: e.g., Glo for globals, Loc for locals, Fun for functions), type (Type: e.g., INT, PTR), and value (Val: e.g., address or constant). In parsing (expr() and stmt()), symbols are resolved based on context:
+- Variables: Globals (Glo) use IMM to load their address, while locals (Loc) use LEA with an offset from loc.
+- Functions: Marked as Fun, their address is stored in Val, used with JSR for calls.
+- System calls (Sys) and enums (Num) are predefined with fixed values. 
+This resolution is scope-aware, with locals shadowing globals by storing prior states in HClass, HType, HVal, restored after function exit. The simplicity avoids complex scoping rules but supports C4’s subset effectively.
+
+3. What are the limitations of C4 as a compiler? What features of C does it not support?
+C4 is a minimalistic compiler with notable limitations, reflecting its design for self-compilation and basic functionality:
+- No Structs/Unions: Lacks support for composite types, relying solely on char, int, and pointers.
+- Limited Preprocessor: Only skips # directives (e.g., #include), ignoring macros or conditionals.
+- Basic Type System: Supports only CHAR, INT, and PTR, omitting float, double, or unsigned types.
+- No Arrays Beyond Pointers: Arrays are treated as pointers without multidimensional support or bounds checking.
+- Simplified Scoping: Uses a flat symbol table without nested scopes beyond function-level locals.
+- No Advanced Control Structures: Missing switch, for, do-while (though while and if suffice for self-compilation).
+- Minimal Error Handling: Exits on errors (e.g., undefined variables) without recovery or detailed diagnostics.
+- No Optimization: Generates straightforward VM code without peephole or higher-level optimizations.
+- Limited Library: Only basic system calls (e.g., printf, malloc) are supported, not the full C standard library.
+These omissions make C4 unsuitable for complex C programs but sufficient for its own source and similar small codes.
+
+4. How does C4 achieve self-hosting (i.e., compiling itself)? What are the implications of this design?
+C4 achieves self-hosting by being written in a subset of C that it can compile, leveraging its four functions to process its own source code:
+- Lexical Analysis: next() tokenizes c4.c, recognizing its keywords and syntax.
+- Parsing and Code Generation: expr() and stmt() parse the code, emitting VM instructions into *e, handling C4’s own constructs (e.g., if, while).
+- VM Execution: main() runs the emitted code, executing itself via the stack-based VM.
